@@ -34,7 +34,7 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 
 ######################################## Clean the data ########################################################
-#### Create a list to show the columns needs to be deleted from the dataset
+#### Create a list to show the columns needs to be deleted from the dataset; These features were not selected to included in the prediction model
 list_to_delete = ['AMONTH',"AGE_NEONATE","DISCWT","DRG","DRGVER","DRG_NoPOA","I10_BIRTH","MDC_NoPOA","NIS_STRATUM","APRDRG",
                   "N_DISC_U","N_HOSP_U","S_DISC_U","S_HOSP_U","TOTAL_DISC","DISPUNIFORM", "TRAN_OUT", "DQTR", "CMR_ARTH",
                   "CMR_AUTOIMMUNE", "CMR_CANCER_LEUK", "CMR_CANCER_LYMPH",
@@ -42,37 +42,39 @@ list_to_delete = ['AMONTH',"AGE_NEONATE","DISCWT","DRG","DRGVER","DRG_NoPOA","I1
 NIS_All.drop(columns=list_to_delete, inplace=True)
 
 #### Create columns list
-Response_column = ['LOS','TOTCHG','DIED']
-pr_cols = [f'I10_PR{i}' for i in range(1, 26)]
-day_cols = [f'PRDAY{i}' for i in range(1, 26)]
-dx_cols = [f'I10_DX{i}' for i in range(1, 41)]
+Response_column = ['LOS','TOTCHG','DIED'] # All the patient outcomes (LOS: Length of stay, TOTCHG: Total charges, DIED: Mortality)
 
-numeric_cols = ['AGE']
+pr_cols = [f'I10_PR{i}' for i in range(1, 26)] # A list of ICD procedure feature names. I10_PR ranges from 1 to 25 to contain up to 25 procedure code for each record.
+day_cols = [f'PRDAY{i}' for i in range(1, 26)] # A corresponding day feature names. PRDay ranges from 1 to 25 to show which day each procedure was performed to each I10_PR code.
+dx_cols = [f'I10_DX{i}' for i in range(1, 41)] # A list of ICD diagnosis feature names. I10_DX ranges from 1 to 40 to contain up to 40 diagnosis code for each record.
+
+numeric_cols = ['AGE'] # Continuous features 
 
 cmr_columns = ["CMR_AIDS","CMR_ALCOHOL","CMR_DEMENTIA","CMR_DEPRESS","CMR_DIAB_CX",
                "CMR_DIAB_UNCX","CMR_DRUG_ABUSE","CMR_HTN_CX","CMR_HTN_UNCX","CMR_LUNG_CHRONIC","CMR_OBESE","CMR_PERIVASC",
-               "CMR_THYROID_HYPO","CMR_THYROID_OTH"]
+               "CMR_THYROID_HYPO","CMR_THYROID_OTH"] # CMR commorbidity diagnosis. 
 
 #### Create new columns
 
-## Create Z006 to indicate if the pt in clinical trial or not
-NIS_All["Z006"] = 0
-NIS_All["Z006"] = (NIS_All.loc[:, "I10_DX1":"I10_DX40"] == 'Z006').any(axis=1).astype(int)
+## Create Z006 to indicate if the pt in clinical trial or not. Z006 is the ICD diagnosis code to show if the visit involves clinical trial activities or not.
+NIS_All["Z006"] = 0 # No clinical trial activity and assign 0
+NIS_All["Z006"] = (NIS_All.loc[:, "I10_DX1":"I10_DX40"] == 'Z006').any(axis=1).astype(int) # Check all I10_DX columns to find clinical trial activity and assign 1
 
 ## Create the reamission information
-list = ['C9100','C9101','C9102'] # ICD code for NEO059
-# Create a new column for each value in list
-for value in list:
+ALL_list = ['C9100','C9101','C9102'] # ICD code for NEO059: patients diagnosis with Acute Lymphoblastic Leukemia (ALL). C9100, C9101 and C9102 show different disease progress with ALL.
+
+# Create a new column for each value in ALL_list
+for value in ALL_list:
     NIS_All[value] = np.where(NIS_All.filter(like='I10_DX').eq(value).any(axis=1), 1, 0)
 
 ## Create Area for patient location
 def map_category_Area(value):
     if value in [1, 2]:
-        return "0"
+        return "0" # Urban
     elif value in [3, 4]:
-        return "1"
+        return "1" # Transfer from Urban to Rural: Metro counties
     elif value in [5, 6]:
-        return "2"
+        return "2" # Rural
     else:
         return np.nan
 ## Create the new variable based on the mapping
@@ -82,7 +84,6 @@ categorical_columns = ['YEAR', 'AWEEKEND', 'ELECTIVE', 'FEMALE', 'HCUP_ED',
                        'I10_INJURY', 'I10_MULTINJURY','I10_SERVICELINE','PAY1', 'PCLASS_ORPROC',
                        'PL_NCHS','RACE', 'TRAN_IN', 'YEAR', 'ZIPINC_QRTL','APRDRG_Risk_Mortality', 'APRDRG_Severity',
                       'HOSP_BEDSIZE','HOSP_LOCTEACH', 'HOSP_REGION','H_CONTRL', 'Area','C9100','C9101','C9102']
-MDC_col = ["MDC"]
 
 #### Deal with the missing value
 ## Replace the missing value: Based on HCUP data description, convert some missing vlaue to nan
@@ -111,7 +112,7 @@ for col in int_cols:
 missing_values = NIS_All.isnull().sum()
 print(missing_values)
 
-#### Impute the missing value
+#### Impute the missing value 
 missing_continuous = ["AGE"]
 missing_binary = ["FEMALE", "ELECTIVE"]
 missing_categorical = ["PAY1", "TRAN_IN", "PL_NCHS", "ZIPINC_QRTL", "RACE"]
@@ -145,54 +146,6 @@ NIS_All.loc[:,'KID'] = NIS_All.loc[:,'AGE'].apply(map_category_AGE)
 missing_values = NIS_All.isnull().sum()
 print("Missing value", missing_values)
 
-## PLOT ##################################
-# Create histogram plot for continuous variable
-#for column in missing_continuous:
-    # plot histogram
-#    plt.hist(NIS_All[column], bins='auto',density=True, alpha=0.5, edgecolor='k') # alpha set transparency for better visual; 'k' black edge color
-    # plot density curve
-#    data = NIS_All[column].dropna()
-#    kde = gaussian_kde(data)
-#    x_vals = np.linspace(data.min(),data.max(),1000)
-#    plt.plot(x_vals, kde(x_vals), color='red', linestyle='-',linewidth=2,label='Density')
-
-#    plt.title(f'Distribution of {column}')
-#    plt.xlabel(column)
-#    plt.ylabel('Density')
-#    plt.grid(True)
-#    plt.show()
-
-# Create bar plot for categorical variables
-#num_plots = len(missing_categorical)
-#fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(8, 8))  # Adjust figure size as needed
-#axes = axes.flatten()  # Flatten axes to easily iterate
-
-# Iterate over columns and create bar plots
-#for i, column in enumerate(missing_categorical):
-    # Count the occurrences of each category
-#    value_counts = NIS_All[column].value_counts()
-
-    # Create a bar plot in the corresponding subplot
-#    sns.barplot(x=value_counts.index, y=value_counts, ax=axes[i], width=0.4)  # Fixed width for bars
-
-    # Set axis labels
-#    axes[i].set_xlabel(column)
-#    axes[i].set_ylabel("Count")
-
-    # Set x-axis ticks to integer values
-#    x_ticks = range(len(value_counts))
-#    axes[i].set_xticks(x_ticks)
-    # Set x-axis labels to the corresponding integer values
-#    axes[i].set_xticklabels(x_ticks) # Rotate x-labels for better readability
-
-# Remove any empty subplots if the number of columns is less than 9
-#for j in range(i + 1, 9):
-#    fig.delaxes(axes[j])
-
-# Adjust spacing and display the plot
-#plt.tight_layout()
-#plt.show()
-####################################################
-
 
 NIS_All.to_csv(r"C:\Users\Jiahui\PycharmProjects\NIS\NIS_ALL_Clean.csv", index=False)
+
