@@ -112,7 +112,7 @@ binary_columns = ['KID','C9100','C9102','Z006','AWEEKEND', 'ELECTIVE', 'FEMALE',
                        'I10_INJURY','PCLASS_ORPROC'] # Exclude the C9101 (Remission)
 
 # Define feature sets and outcome columns
-Response_column = ['PLOSD'] # ['PLOS','DIED']
+Response_column = ['PLOSD'] 
 
 Total_x_list = ['AGE'] + [col for col in encoded_df_cleaned_1.columns] + DX_list + PR_list + cmr_columns + binary_columns
 Total_list = ['AGE'] + [col for col in encoded_df_cleaned_1.columns] + DX_list + PR_list + cmr_columns + binary_columns + Response_column
@@ -131,7 +131,7 @@ print(PRDay_list)
 
 # Loop through outcomes and days
 
-for day in [1.0]:
+for day in [1.0]: # To predict outcome for patients staying longer than day 1, replace 1.0 with PRDay_list
     print("######################################################")
     print(f"Prediction on day: {day}")
 
@@ -388,5 +388,6 @@ for day in [1.0]:
     # Save the DataFrame to a CSV file
     filename1 = fr"C:\Users\Jiahui\PycharmProjects\NIS\Outcome\PLOSD\Prediction_data_output_removaLOS_{day}.csv"
     y_test.to_csv(filename1, index=False)
+
 
 
