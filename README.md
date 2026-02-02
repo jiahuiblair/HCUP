@@ -28,6 +28,7 @@ Workflow
 5. Evaluate and visualize (Evaluation_AUC.py, Evaluation_AUC_PLOSD.py, and Evaluation_TC)  →
 6. Feature visualization (Feature_output_analysis_PD.py and Feature_output_analysis_TC)
 
+<img width="975" height="594" alt="image" src="https://github.com/user-attachments/assets/84e16f13-2a3c-4df9-9e45-342c304387b5" />
 
 
 
