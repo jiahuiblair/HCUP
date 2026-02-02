@@ -35,7 +35,7 @@ NIS_All_Clean_Merge_2 = pd.read_csv(r"C:\Users\Jiahui\PycharmProjects\NIS\NIS_Al
 def map_category_0_1(value):
     return 1 if value in [1, 2, 3, 4] else 0
 
-
+# Regrouping HCUP_ED and I10_INJURY as binary 
 NIS_All_Clean_Merge['HCUP_ED'] = NIS_All_Clean_Merge['HCUP_ED'].apply(map_category_0_1).astype(int)
 NIS_All_Clean_Merge['I10_INJURY'] = NIS_All_Clean_Merge['I10_INJURY'].apply(map_category_0_1).astype(int)
 
@@ -73,10 +73,9 @@ def map_PRDay(value):
         return q3+1
     else:
         return value
-
-
-NIS_All_Clean_Merge['PRDay_model'] = NIS_All_Clean_Merge['PRDay'].apply(map_PRDay)
+NIS_All_Clean_Merge['PRDay_model'] = NIS_All_Clean_Merge['PRDay'].apply(map_PRDay) # Regroup the PRDay: if procedure provided before admission, count as day 0 
 print(NIS_All_Clean_Merge['PRDay_model'].unique())
+
 # Define categorical columns to one-hot encode
 categorical_columns = ['YEAR', 'I10_SERVICELINE', 'PAY1', 'RACE', 'TRAN_IN', 'ZIPINC_QRTL',
                        'APRDRG_Risk_Mortality', 'APRDRG_Severity', 'HOSP_BEDSIZE', 'HOSP_LOCTEACH',
@@ -111,7 +110,7 @@ cmr_columns = ["CMR_AIDS","CMR_ALCOHOL","CMR_DEMENTIA","CMR_DEPRESS","CMR_DIAB_C
 binary_columns = ['KID','C9100','C9102','Z006'] # Exclude the C9101 (Remission)
 
 # Define feature sets and outcome columns
-Response_column = ['PLOS','DIED'] #,'DIED'
+Response_column = ['PLOS','DIED'] 
 
 Total_x_list = ['AGE'] + [col for col in encoded_df_cleaned_1.columns] + DX_list + PR_list + cmr_columns + binary_columns
 Total_list = ['AGE'] + [col for col in encoded_df_cleaned_1.columns] + DX_list + PR_list + cmr_columns + binary_columns + Response_column
@@ -131,7 +130,7 @@ print(PRDay_list)
 
 # Loop through outcomes and days
 
-for day in [1.0]:
+for day in [1.0]: # To predict the outcome for patients staying in hospital longer than 1, use PRDay_list to replace 1.0
     print("######################################################")
     print(f"Prediction on day: {day}")
 
@@ -361,5 +360,6 @@ for day in [1.0]:
     # Save the DataFrame to a CSV file
     filename1 = fr"C:\Users\Jiahui\PycharmProjects\NIS\Outcome\PLOSDIED\Prediction_data_output_removeLOS_{day}.csv"
     y_test.to_csv(filename1, index=False)
+
 
 
