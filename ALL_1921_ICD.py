@@ -56,7 +56,7 @@ df_days = pd.melt(NIS_All_DAY, id_vars=['KEY_NIS','HOSP_NIS'], value_vars=day_co
 df_long['PRDay'] = df_days['PRDay']
 
 
-# Find the PR code list which has Freq greater than 1%
+# Find the PR code list which has Freq greater than 1%; Decide to only include the ICD codes whose frequency is greater than 1% of the whole sample
 icd_freq = df_long['ICD_Code'].value_counts()
 frequent_codes = icd_freq[icd_freq > 0.01*len(NIS_All_DAY)].index
 
@@ -68,10 +68,11 @@ filtered_df.drop(columns=['ICD_Code_Column'], inplace=True)
 filtered_df['PRDay'] = pd.to_numeric(filtered_df['PRDay'], errors='coerce')
 
 # Pivot the DataFrame
-pivot_df = filtered_df.pivot_table(index=['KEY_NIS','HOSP_NIS','PRDay'], columns='ICD_Code', aggfunc='size', fill_value=0) ## !! NEED to discuss this
+pivot_df = filtered_df.pivot_table(index=['KEY_NIS','HOSP_NIS','PRDay'], columns='ICD_Code', aggfunc='size', fill_value=0) 
+## Include the PRDay to keep all the PR records for each patient with multiple PR codes with their procedure day
 
 # Ensure the values are binary (1 or 0)
-NIS_ALL_PR = (pivot_df > 0).astype(int).reset_index()
+NIS_ALL_PR = (pivot_df > 0).astype(int).reset_index() # Including all the key variables and frequent PR code as binary variables 
 
 # Exporting to CSV after resetting the index to include KEY_NIS and Day in the CSV file
 #NIS_ALL_PR.to_csv(r"C:\Users\Jiahui\PycharmProjects\NIS\NIS_ALL_PR.csv", index=False)
@@ -93,7 +94,7 @@ dx_cols = [f'I10_DX{i}' for i in range(1, 41)]
 # Create a new df for new DX columns with KEY_NIS
 NIS_ALL_DX = NIS_ALL.copy()
 
-# Values to replace: replace these value with Nan, so they can be created pon their own columns in prediction
+# Values to replace: replace these values with Nan, so they can be created per their own columns in prediction
 values_to_replace = ['C9100', 'C9101', 'C9102','Z006']
 
 # Replace values with NaN using np.where
@@ -105,7 +106,7 @@ for col in dx_cols:
 # Convert grouping structure to a list of tuples
 grouping = grouping_df[["ICD", "Start", "End"]].values.tolist()
 
-# Function to map ICD codes to categories using the grouping list
+# Function to map ICD codes to categories using the grouping list: The grouping list is beased on: https://www.icd10data.com/ICD10CM/Codes
 def map_icd_to_category(code):
     for group, start, end in grouping:
         # Compare lexicographically
@@ -132,7 +133,6 @@ NIS_ALL_DX[dx_cols_cate] = NIS_ALL_DX[dx_cols_cate].replace(' ', np.nan)
 # Drop any missing values
 all_dx = NIS_ALL_DX[dx_cols_cate].apply(lambda row: row.dropna().tolist(), axis=1)
 
-
 # Flatten the list to get all codes in the dataset
 all_dx_codes = [code for sublist in all_dx for code in sublist]
 
@@ -148,7 +148,6 @@ DX_list_1percent = dx_freq_df['DX_Code'][dx_freq_df['Frequency'] > (len(NIS_ALL_
 # Create a new column for each value in list
 for value in DX_list_1percent:
     NIS_ALL_DX[value] = np.where(NIS_ALL_DX.filter(like='I10_DX').eq(value).any(axis=1), 1, 0)
-
 
 # Get the DX ICD description
 ## ICD_DX = pd.read_excel(r"C:\Users\Jiahui\PycharmProjects\NIS\ICDdescription.xlsx", sheet_name= "DX")
@@ -170,8 +169,7 @@ NIS_ALL_DX.drop(columns=dx_cols_cate, inplace=True)
 
 NIS_All_Clean_Merge = pd.merge(NIS_ALL_PR, NIS_ALL_DX, on=['KEY_NIS','HOSP_NIS'], how='left')
 
-NIS_All_Clean_Merge.to_csv(r"C:\Users\Jiahui\PycharmProjects\NIS\NIS_All_Clean_Merge.csv", index=False)
-
+NIS_All_Clean_Merge.to_csv(r"C:\Users\Jiahui\PycharmProjects\NIS\NIS_All_Clean_Merge.csv", index=False) # n=23663
 missing_values = NIS_All_Clean_Merge.isnull().sum()
 print("Missing value 1")
 print(missing_values)
@@ -223,5 +221,6 @@ missing_values = NIS_All_Clean_Merge_2.isnull().sum()
 print("Missing value 2")
 print(missing_values)
 
-NIS_All_Clean_Merge_2.to_csv(r"C:\Users\Jiahui\PycharmProjects\NIS\NIS_All_Clean_Merge_2.csv", index=False)
+NIS_All_Clean_Merge_2.to_csv(r"C:\Users\Jiahui\PycharmProjects\NIS\NIS_All_Clean_Merge_2.csv", index=False) # n=20372
+
 
