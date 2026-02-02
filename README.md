@@ -20,6 +20,14 @@ Prediction process:
 The continuous patient outcome prediction was defined as using the predicted PLOS and Mortality outcome (both combined outcome and individual outcome) as input to predict the total charges. 
 The dynamic prediction process predicts the patient's outcome per day using available procedure information for the first 7 days of hospitalization.
 
+Workflow
+1. Data cleaning (ALL_1921_datacleaning.py) →
+2. Select and convert ICD codes into binary version (ALL_1921_ICD.py) →
+3. Predict the PLOS and mortality outcomes (both combined and individual outcomes) with feature engineering, dataset balancing technique, train/test models (ALL_1921_3_PD.py and ALL_1921_3_PLOSD) →
+4. Predict the total charges with predicted outcomes from PLOS and mortality (ALL_1921_3_TC_Best_Ind.py and ALL_1921_3_TC_comb.py) →
+5. Evaluate and visualize (Evaluation_AUC.py, Evaluation_AUC_PLOSD.py, and Evaluation_TC)  →
+6. Feature visualization (Feature_output_analysis_PD.py and Feature_output_analysis_TC)
+
 
 
 
